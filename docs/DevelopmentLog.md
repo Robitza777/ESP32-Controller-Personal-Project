@@ -51,3 +51,21 @@ A chronological log of design decisions, findings, and progress on the ESP32 BLE
 - Continued development of the suspended internal mounting platform for the OLED display, refining its positioning and structural support.
 - Experimentally verified that the FM5324UI module's KEY pin does not provide the expected power control behavior in this hardware implementation.
 - Updated the power system design to replace the KEY-pin-controlled power function with a dedicated inline physical on/off switch that completely disconnects system power.
+- Printed a test part to see the screen tolerances and placement on the suspended internal mounting platform.
+- Adjusted the stl file `black_front` again after the test.
+- Sanded the ESP32 mounting supports to gain more clearance.
+- Fixed The screen hole going through the top cover (made me actually happy for some reason).
+
+## 2026-07-16 — Schematic and Pinout Update
+
+- Created the complete electrical schematic for the controller hardware.
+- Added the finalized schematic to the GitHub repository documentation.
+- Experimentally verified the I²C pull-up resistor configuration of the MAX17048 and SSD1306 modules, confirming that external pull-up resistors are unnecessary.
+- Updated `Pinout.md` with a clearer description of the physical layout and positioning of the buttons and joysticks.
+  
+## 2026-07-17 — Power Management Findings and Documentation Updates
+
+- Experimentally determined that the FM5324UI automatically disables its 5V output after approximately 30 seconds when the load current is below its minimum threshold.
+- Identified this behavior as a potential blocker for implementing the planned light/deep sleep functionality, since the reduced power consumption during sleep may trigger an unintended power shutdown (further investigation needed).
+- Expanded the project documentation by adding `Bluetooth.md`, `Features.md`, `FuturePlans.md`, `Hardware.md`, and `Software.md` to the `docs/` directory.
+- Added `CONTRIBUTING.md` to the repository, providing guidelines for future contributions and development workflow.
