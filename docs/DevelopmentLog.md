@@ -69,3 +69,13 @@ A chronological log of design decisions, findings, and progress on the ESP32 BLE
 - Identified this behavior as a potential blocker for implementing the planned light/deep sleep functionality, since the reduced power consumption during sleep may trigger an unintended power shutdown (further investigation needed).
 - Expanded the project documentation by adding `Bluetooth.md`, `Features.md`, `FuturePlans.md`, `Hardware.md`, and `Software.md` to the `docs/` directory.
 - Added `CONTRIBUTING.md` to the repository, providing guidelines for future contributions and development workflow.
+
+## 2026-07-18 — Repository Documentation Restructuring
+
+- Restructured the repository documentation to reduce duplication and improve maintainability.
+- Merged `Features.md` into `README.md`, consolidating the project overview and feature descriptions into a single entry point.
+- Merged `Bluetooth.md` into `Software.md`, keeping communication architecture and BLE implementation details together with the firmware documentation.
+- Merged `Battery.md` into `Hardware.md`, consolidating power architecture and battery management information with the hardware documentation.
+- Simplified the `docs/` directory structure to make project information easier to navigate and reduce maintenance overhead.
+- Added `Architecture.md` to the `docs/` directory to document the overall system design, module relationships, communication flow, and firmware architecture.
+- Added `Pinout.png` to the `hardware/pinout/` directory to provide a visual reference for the physical board orientation and component placement.
