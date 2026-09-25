@@ -79,3 +79,38 @@ A chronological log of design decisions, findings, and progress on the ESP32 BLE
 - Simplified the `docs/` directory structure to make project information easier to navigate and reduce maintenance overhead.
 - Added `Architecture.md` to the `docs/` directory to document the overall system design, module relationships, communication flow, and firmware architecture.
 - Added `Pinout.png` to the `hardware/pinout/` directory to provide a visual reference for the physical board orientation and component placement.
+
+## 2026-09-05 — Assembly and Enclosure Adjustments
+
+- Started soldering the components into their final positions on the circuit boards.
+- Cut the ESP32 pins to allow the module to fit underneath the secondary circuit board.
+- Identified an issue with the placement of the L1 and R1 switches and planned to reposition them.
+- Modified `black_front` to improve the enclosure fit; further testing is required.
+- Modified `green_thumbstick_x2` to provide better clearance around the electrical components.
+
+## 2026-09-07 — Enclosure and Component Placement Adjustments
+
+- Fixed the placement of the L1 and R1 switches.
+- Fixed an issue with the R1 button clearance in `black_front`.
+- Adjusted the `green_abxy_x4`, `green_dpad_x4`, `green_home`, and `green_on_off` buttons to fit the new switch placement.
+- Moved the joystick holes to align with their positions on the circuit board.
+- Lowered the on/off button position to improve its fit within the enclosure.
+- Tested a new method for preventing overhang edges from sagging, aiming to achieve a cleaner perimeter around the screen opening.
+
+## 2026-09-18 — Hardware Wiring and Pin Assignment Testing
+
+- Started making the electrical connections between the hardware components.
+- Swapped the GPIO assignments of the L3 and R3 buttons, resulting in L3 → GPIO25 and R3 → GPIO26.
+- Tested the analog joystick axes and several buttons using dedicated test firmware to verify their functionality.
+- Discovered that connecting a button to GPIO3 interferes with the Serial Monitor. Planned to move the B button to GPIO39 and add an external 10 kΩ pull-up resistor to 3.3 V.
+- Considered changing the GPIO assignments of additional buttons to improve cable routing and reduce wiring complexity.
+- Any further pin assignment changes will be reflected in `Pinout.md`, `Pinout.png`, and the electrical schematic.
+
+## 2026-09-25 — Final Hardware Wiring and Pinout Updates
+
+- Finished the electrical connections between the hardware components.
+- Moved the B button from GPIO3 to GPIO39 and added an external 10 kΩ pull-up resistor to 3.3 V.
+- Adjusted the wiring of several pins to improve cable routing and overall wire management.
+- Experimentally determined that the button connected to GPIO2 was being read as permanently pressed. Added a 1 kΩ pull-up resistor to 3.3 V to resolve the issue.
+- Updated `Pinout.md`, `Pinout.png`, and the electrical schematic to reflect all wiring and pin assignment changes.
+- Added the first media files documenting the electrical component placement, wiring, and functionality of the test firmware.
