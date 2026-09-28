@@ -1,6 +1,6 @@
 # GPIO Pinout
 
-This document describes the GPIO assignments used by the ESP32-BLE-Gamepad project.
+This document describes the GPIO assignments used by the ESP32-Controller-Personal-Project.
 
 ---
 
@@ -14,17 +14,17 @@ This document describes the GPIO assignments used by the ESP32-BLE-Gamepad proje
 | Y Button (Up) | GPIO4 | Standard digital input. Uses internal `INPUT_PULLUP`. |
 | D-Pad Up | GPIO5 | Boot strapping pin (SDIO timing). Avoid holding during reset. |
 | D-Pad Down | GPIO39 | Input-only pin (GPI). Lacks internal pull resistors; requires an external 10 kΩ pull-up resistor. |
-| D-Pad Left | GPIO23 | Standard digital input. Uses internal INPUT_PULLUP. |
-| D-Pad Right | GPIO13 | Standard digital input. Uses internal INPUT_PULLUP. |
-| R1 (Right Shoulder) (Up) | GPIO16 | Standard digital input. Uses internal INPUT_PULLUP. |
+| D-Pad Left | GPIO23 | Standard digital input. Uses internal `INPUT_PULLUP`. |
+| D-Pad Right | GPIO13 | Standard digital input. Uses internal `INPUT_PULLUP`. |
+| R1 (Right Shoulder) (Up) | GPIO16 | Standard digital input. Uses internal `INPUT_PULLUP`. |
 | R2 (Right Trigger) (Down) | GPIO15 | Boot strapping pin (ROM boot logging). Avoid holding during reset. |
-| R3 (Right Joystick Click) | GPIO26 | Standard digital input. Uses internal INPUT_PULLUP. |
+| R3 (Right Joystick Click) | GPIO26 | Standard digital input. Uses internal `INPUT_PULLUP`. |
 | R4 (Back Paddle) | GPIO12 | Boot strapping pin (flash VDD voltage). Critical: do not pull HIGH at boot. |
-| L1 (Left Shoulder) (Up) | GPIO18 | Standard digital input. Uses internal INPUT_PULLUP. |
-| L2 (Left Trigger) (Down) | GPIO19 | Standard digital input. Uses internal INPUT_PULLUP. |
-| L3 (Left Joystick Click) | GPIO25 | Standard digital input. Uses internal INPUT_PULLUP. |
-| L4 (Back Paddle) | GPIO14 | Standard digital input. Uses internal INPUT_PULLUP. |
-| Options (Middle) | GPIO27 | Standard digital input. Uses internal INPUT_PULLUP. |
+| L1 (Left Shoulder) (Up) | GPIO18 | Standard digital input. Uses internal `INPUT_PULLUP`. |
+| L2 (Left Trigger) (Down) | GPIO19 | Standard digital input. Uses internal `INPUT_PULLUP`. |
+| L3 (Left Joystick Click) | GPIO25 | Standard digital input. Uses internal `INPUT_PULLUP`. |
+| L4 (Back Paddle) | GPIO14 | Standard digital input. Uses internal `INPUT_PULLUP`. |
+| Options (Middle) | GPIO27 | Standard digital input. Uses internal `INPUT_PULLUP`. |
 | Profile Button | GPIO36 |Input-only pin (GPI). Lacks internal pull resistors; requires an external 10 kΩ pull-up resistor. |
 
 ---
@@ -55,7 +55,16 @@ Both devices share the same I²C bus.
 
 | Function | Recommendation |
 |----------|---------------|
-| MAX17048 INT | Leave unconnected unless interrupt functionality is required. GPIO39 is the preferred choice if available. |
+| MAX17048 INT | Leave unconnected (not used in this build). No free GPIO is left for it: GPIO39 is now D-Pad Down, and GPIO1 / GPIO3 are reserved. The firmware reads the fuel gauge every 5 seconds instead. |
+
+---
+
+## Reserved GPIOs
+
+| GPIO | Reason |
+|------|--------|
+| GPIO1 (TX0) | USB serial (CP2102): firmware upload and the Serial Monitor. Keep free. |
+| GPIO3 (RX0) | USB serial (CP2102). A button on this pin interferes with the Serial Monitor. Keep free. |
 
 ---
 

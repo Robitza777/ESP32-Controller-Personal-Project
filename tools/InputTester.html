@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Input Tester</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --text: #1d2330; --muted: #6b7385; --line: #dde1e8;
+    --on: #1f7a4d; --on-bg: #dcf3e6; --accent: #2f5bd3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171d; --panel: #1c2029; --text: #e6e9ef; --muted: #8a93a6; --line: #2c3240;
+            --on: #6fe0a4; --on-bg: #173a29; --accent: #7fa2ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--text);
+         font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .hint { color: var(--muted); margin: 0 0 16px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 34px; }
+  .chip { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted);
+          font: 600 13px ui-monospace, Consolas, monospace; }
+  .chip.on { background: var(--on-bg); border-color: var(--on); color: var(--on); }
+  .empty { color: var(--muted); font-style: italic; padding: 6px 0; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stat b { font: 600 16px ui-monospace, Consolas, monospace; }
+  .sticks { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stick { text-align: center; }
+  .stick svg { width: 120px; height: 120px; }
+  .stick .ring { fill: none; stroke: var(--line); stroke-width: 2; }
+  .stick .dot { fill: var(--accent); }
+  .mono { font: 12px ui-monospace, Consolas, monospace; color: var(--muted); }
+  #log { font: 12px ui-monospace, Consolas, monospace; height: 220px; overflow-y: auto; margin: 0;
+         white-space: pre-wrap; }
+  button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--text); cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Input Tester</h1>
+<p class="hint">Click once on this page so it has focus. It shows what is held right now; the log keeps press/release
+  times (useful for turbo and toggle). Media keys and Win/Alt+Tab are handled by Windows and don't reach the page.</p>
+
+<div class="grid">
+  <section class="panel">
+    <h2>Keys held now</h2>
+    <div class="chips" id="keys"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Mouse</h2>
+    <div class="chips" id="mouseButtons"></div>
+    <div class="row" style="margin-top:10px">
+      <div class="stat">Scroll V <b id="wheelV">0</b></div>
+      <div class="stat">Scroll H <b id="wheelH">0</b></div>
+      <div class="stat">Move <b id="moveXY">0, 0</b></div>
+      <button id="resetMouse">Reset</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Gamepad</h2>
+    <div class="mono" id="padName">No gamepad yet: press any controller button.</div>
+    <div class="chips" id="padButtons" style="margin-top:8px"></div>
+    <div class="sticks" style="margin-top:10px">
+      <div class="stick"><svg viewBox="-60 -60 120 120"><circle class="ring" r="50"/><circle class="dot" id="dotL" r="6"/></svg>
+        <div class="mono" id="valL">L 0.00, 0.00</div></div>
+      <div class="stick"><svg viewBox="-60 -60 120 120"><circle class="ring" r="50"/><circle class="dot" id="dotR" r="6"/></svg>
+        <div class="mono" id="valR">R 0.00, 0.00</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Log <button id="clearLog" style="float:right">Clear</button></h2>
+    <pre id="log"></pre>
+  </section>
+</div>
+
+<script>
+  const heldKeys = new Map();       // event.code -> press time
+  const heldMouse = new Set();
+  const MOUSE_NAMES = ["Left", "Middle", "Right", "Back (4)", "Forward (5)"];
+  const PAD_NAMES = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "View", "Menu", "LS", "RS",
+                     "Up", "Down", "Left", "Right", "Guide"];
+  let wheelV = 0, wheelH = 0, moveX = 0, moveY = 0;
+  const logEl = document.getElementById("log");
+  const start = performance.now();
+
+  function log(text) {
+    const t = ((performance.now() - start) / 1000).toFixed(3).padStart(8);
+    logEl.textContent = `${t}s  ${text}\n` + logEl.textContent.split("\n").slice(0, 300).join("\n");
+  }
+
+  function renderChips(el, items, emptyText) {
+    el.innerHTML = items.length ? items.map(t => `<span class="chip on">${t}</span>`).join("")
+                                : `<span class="empty">${emptyText}</span>`;
+  }
+
+  function renderKeys() { renderChips(document.getElementById("keys"), [...heldKeys.keys()], "nothing held"); }
+  function renderMouse() {
+    renderChips(document.getElementById("mouseButtons"), [...heldMouse].map(b => MOUSE_NAMES[b] ?? `Button ${b}`),
+                "no button held");
+    document.getElementById("wheelV").textContent = wheelV;
+    document.getElementById("wheelH").textContent = wheelH;
+    document.getElementById("moveXY").textContent = `${moveX}, ${moveY}`;
+  }
+
+  window.addEventListener("keydown", e => {
+    e.preventDefault();
+    if (e.repeat || heldKeys.has(e.code)) return;  // auto-repeat isn't a new press
+    heldKeys.set(e.code, performance.now());
+    log(`key down  ${e.code}`);
+    renderKeys();
+  });
+  window.addEventListener("keyup", e => {
+    e.preventDefault();
+    const since = heldKeys.get(e.code);
+    heldKeys.delete(e.code);
+    log(`key up    ${e.code}` + (since ? `  (held ${(performance.now() - since).toFixed(0)} ms)` : ""));
+    renderKeys();
+  });
+  // Releases that happen while another window has focus never arrive; start clean.
+  window.addEventListener("blur", () => { heldKeys.clear(); heldMouse.clear(); renderKeys(); renderMouse(); });
+
+  window.addEventListener("mousedown", e => { e.preventDefault(); heldMouse.add(e.button);
+    log(`mouse down ${MOUSE_NAMES[e.button] ?? e.button}`); renderMouse(); });
+  // Stops Back/Forward from navigating away.
+  window.addEventListener("mouseup", e => { e.preventDefault(); heldMouse.delete(e.button);
+    log(`mouse up   ${MOUSE_NAMES[e.button] ?? e.button}`); renderMouse(); });
+  window.addEventListener("auxclick", e => e.preventDefault());
+  window.addEventListener("contextmenu", e => e.preventDefault());
+  window.addEventListener("mousemove", e => { moveX += e.movementX; moveY += e.movementY; renderMouse(); });
+  window.addEventListener("wheel", e => {
+    e.preventDefault();
+    if (e.deltaY) { wheelV += e.deltaY < 0 ? 1 : -1; log(`scroll ${e.deltaY < 0 ? "up" : "down"}`); }
+    if (e.deltaX) { wheelH += e.deltaX > 0 ? 1 : -1; log(`scroll ${e.deltaX > 0 ? "right" : "left"}`); }
+    renderMouse();
+  }, { passive: false });
+
+  document.getElementById("resetMouse").onclick = () => { wheelV = wheelH = moveX = moveY = 0; renderMouse(); };
+  document.getElementById("clearLog").onclick = () => { logEl.textContent = ""; };
+
+  let lastPadButtons = "";
+  function pollGamepad() {
+    const pad = [...navigator.getGamepads()].find(p => p);
+    if (pad) {
+      document.getElementById("padName").textContent = pad.id;
+      const pressed = pad.buttons.map((b, i) => b.pressed ? (PAD_NAMES[i] ?? `B${i}`) : null).filter(Boolean);
+      const now = pressed.join(" ");
+      if (now !== lastPadButtons) { log(`pad  [${now || "-"}]`); lastPadButtons = now; }
+      renderChips(document.getElementById("padButtons"), pressed, "no button held");
+      const [lx, ly, rx, ry] = pad.axes;
+      for (const [id, x, y, name] of [["L", lx, ly, "L"], ["R", rx, ry, "R"]]) {
+        document.getElementById("dot" + id).setAttribute("cx", (x * 50).toFixed(1));
+        document.getElementById("dot" + id).setAttribute("cy", (y * 50).toFixed(1));
+        document.getElementById("val" + id).textContent = `${name} ${x.toFixed(2)}, ${(-y).toFixed(2)}  r ${Math.hypot(x, y).toFixed(2)}`;
+      }
+    }
+    requestAnimationFrame(pollGamepad);
+  }
+
+  renderKeys(); renderMouse(); requestAnimationFrame(pollGamepad);
+</script>
+</body>
+</html>

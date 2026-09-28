@@ -109,8 +109,45 @@ A chronological log of design decisions, findings, and progress on the ESP32 BLE
 ## 2026-09-25 — Final Hardware Wiring and Pinout Updates
 
 - Finished the electrical connections between the hardware components.
-- Moved the B button from GPIO3 to GPIO39 and added an external 10 kΩ pull-up resistor to 3.3 V.
-- Adjusted the wiring of several pins to improve cable routing and overall wire management.
+- Adjusted the wiring of several pins to improve cable routing and overall wire management (added a 10 kΩ pull-up resistor from 3.3v to the GPIO39).
 - Experimentally determined that the button connected to GPIO2 was being read as permanently pressed. Added a 1 kΩ pull-up resistor to 3.3 V to resolve the issue.
 - Updated `Pinout.md`, `Pinout.png`, and the electrical schematic to reflect all wiring and pin assignment changes.
 - Added the first media files documenting the electrical component placement, wiring, and functionality of the test firmware.
+
+## 2026-09-26 — Firmware Rewrite and Bluetooth Composite Test
+
+- Added `Test_Code_Compressed.mp4` to media to hopefully allow for web viewing of the video.
+- Fixed `Pinout.md` Digital Inputs Table.
+- Started the 1.0.0 firmware from scratch as a modular PlatformIO project (one `.h`/`.cpp` module per function, every pin and timing in `Config.h`), with responsiveness as the top priority.
+- Built a standalone test firmware for **ESP32-BLE-CompositeHID**: an Xbox controller, a keyboard, media keys, and a mouse on one Bluetooth connection. Windows bound its native Xbox driver (`xinputhid`), and all four devices worked together.
+- Experimentally determined that Windows rejects the device ("driver error", Code 10) when the combined HID report map is larger than 512 bytes. The Xbox One S configuration with keyboard, media keys, and mouse needs about 546 bytes; switched to the Xbox **Series** configuration (about 495 bytes).
+- Verified that the host reconnects without re-pairing after a power cycle, and that Windows accepts the shortest connection interval (7.5 ms).
+- Determined the stick directions: the raw X value falls when a stick is pushed right, the raw Y value rises when it is pushed up.
+
+## 2026-09-27 — Core Firmware Modules
+
+- Defined the task layout: a 1 kHz input task on core 1 (buttons → profiles → Bluetooth) and a slower UI task on core 0 (display, battery, storage), so slow work never delays input.
+- Implemented `InputReader`:
+  - All buttons are read in one go from the GPIO registers, with eager debounce.
+  - `analogRead()` was measured at about 117 µs per read; the sticks now go through the ESP-IDF low-level ADC functions (a full scan takes about 160–180 µs).
+  - Per-direction stick calibration and circular mapping brought the gamepad tester's circularity error from 15–19% down to **0.0%**.
+  - Added a workaround for the ESP32 errata on GPIO36/39 (false LOW readings when the ADC powers up).
+- Vendored ESP32-BLE-CompositeHID into `firmware/lib/` (the next upstream version needs ESP-IDF 5) and extended it: the full keyboard range including F13–F24, any media/consumer key, system keys (power, sleep, wake), and the device name in the scan response. Implemented `BleOutput`; all keys, mouse buttons 1–5, and both scroll directions verified on Windows.
+- Implemented `Profiles` and `ProfileButton`: the four presets (GAMEPAD, KB+MOUSE, MEDIA, HYBRID with an R4 "PC layer"), up to 3 actions per button, Toggle/Turbo/Layer modes, stick modes, and the new profile button gestures (short press, double press, hold + A/B/X/Y). Verified on hardware, including WASD diagonals in a real game.
+- Added `tools/InputTester.html`, a browser page that shows held keys, mouse buttons, scrolling, and gamepad buttons and sticks.
+- Found that random power-offs and a right stick not resting at zero were caused by the ESP32 DevKit not being fully seated in its female headers (lost contact on the `5V` pin). Reseated the board; both problems disappeared.
+- Implemented `Display` (switched from Adafruit SSD1306/GFX to U8g2, rotated 180°) and `BatteryMonitor` (MAX17048, battery level also reported to Windows). All on-device text is in English; profile names use one fixed font size.
+- Implemented `Storage`: the controller starts on the last active profile. Enlarged the NVS settings store to 128 KB with a custom partition table. A first attempt that moved the app to 0x20000 boot-looped, because PlatformIO always flashes the app at 0x10000; the app stays at 0x10000 and NVS moved after it.
+- Investigated the gamepad no longer working after a restart (Windows sometimes showing a phone or computer icon): the Bluetooth link came back, but the HID devices didn't. Added connection diagnostics, made room for more stored subscriptions, set the Bluetooth appearance to "gamepad", and count the controller as connected only once the link is encrypted. After one more re-pair, the controller has reconnected after every restart.
+- Started the on-controller configuration menu (round 1): editing buttons, sticks, deadzones, and turbo speed, with Save / Discard / Keep editing when leaving.
+
+## 2026-09-28 — Configuration Menu, Power Management and Firmware 1.0.0
+
+- Finished the configuration menu (round 2): renaming (10 characters), new profiles from a preset or a copy, reordering and deleting profiles, and the Controller page (Forget Bluetooth, Reset all profiles, About). All verified on hardware, including after power cycles.
+- Observed that right after **Forget Bluetooth**, the first pairing sometimes still doesn't survive a restart; one or two re-pairs fix it for good. The cause is not found yet; the debug build logs the stored pairings to investigate it.
+- Added display settings: brightness (10 levels), screen timeout, and the profile name popup, previewed live in the menu.
+- Found that the 10-second screen timeout never fired: at rest, the sticks jitter slightly past their deadzone. Sticks now count as activity only past 25% deflection.
+- Added automatic power-off (separate times while connected and offline, default 5 minutes) with a 10-second full-screen countdown, plus a battery critical warning at 5% and automatic power-off at 2%. Experimentally verified that after the ESP32 enters deep sleep, the power module cuts the 5 V output completely, and that the on/off switch starts the controller again.
+- Added **Recalibrate sticks** to the menu.
+- Created the release and debug builds and tagged the firmware as **1.0.0**.
+- Rewrote the repository documentation for the new firmware and added the User Guide.

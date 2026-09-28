@@ -1,0 +1,56 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "ESP32-BLE-CompositeHID",
+    "version": "0.3.1-robitza.1",
+    "description": "Bluetooth LE Gamepad + Mouse + Keyboard library for the ESP32 (vendored copy with local changes, see VENDORED.md)",
+    "keywords": [
+        "Communication"
+    ],
+    "homepage": "https://github.com/Mystfit/ESP32-BLE-CompositeHID",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Mystfit/ESP32-BLE-CompositeHID.git"
+    },
+    "authors": [
+        {
+            "name": "Mystfit",
+            "maintainer": true,
+            "url": "https://github.com/mystfit"
+        }
+    ],
+    "license": "MIT",
+    "frameworks": [
+        "Arduino"
+    ],
+    "platforms": [
+        "espressif32"
+    ],
+    "headers": [
+        "BleCompositeHID.h",
+        "GamepadDevice.h",
+        "KeyboardDevice.h",
+        "MouseDevice.h",
+        "XboxGamepadDevice.h"
+    ],
+    "dependencies": [
+        {
+            "name": "NimBLE-Arduino",
+            "version": "^2.3.6",
+            "owner": "h2zero"
+        },
+        {
+            "name": "Callback",
+            "owner": "tomstewart89",
+            "version": "^1.1"
+        }
+    ],
+    "build": {
+        "srcDir": ".",
+        "srcFilter": [
+            "+<./*.c>",
+            "+<./*.cpp>",
+            "+<./*.h>",
+            "-<examples/**/*>"
+        ]
+    }
+}

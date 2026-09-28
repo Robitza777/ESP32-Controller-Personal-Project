@@ -1,0 +1,9 @@
+# Name,   Type, SubType,  Offset,   Size,     Flags
+# huge_app.csv with a bigger settings store. PlatformIO always flashes the app at 0x10000 and the Arduino
+# boot_app0.bin at 0xe000, so otadata and app0 must stay exactly where huge_app.csv has them.
+# NVS (profiles, BLE pairing) moves after the app: 128 KB instead of 20 KB. 0x9000-0xe000 is left unused.
+otadata,  data, ota,      0xe000,   0x2000,
+app0,     app,  ota_0,    0x10000,  0x300000,
+nvs,      data, nvs,      0x310000, 0x20000,
+spiffs,   data, spiffs,   0x330000, 0xC0000,
+coredump, data, coredump, 0x3F0000, 0x10000,
